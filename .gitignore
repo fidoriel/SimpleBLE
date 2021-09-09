@@ -2,3 +2,4 @@
 build
 .vscode
 *.binlog
+.DS_Store
