@@ -45,6 +45,13 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/PeripheralSafe.cpp
 )
 
+set(
+    SRC_SIMPLEBLE_C_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src_c/simpleble.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src_c/adapter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src_c/peripheral.cpp
+)
+
 # Detect the operating system and load the necessary dependencies
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     message("-- [INFO] Linux Host Detected")
@@ -84,7 +91,12 @@ elseif (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(WINVERSION_CODE 0x0A00) # Selected Windows 10 based on https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt
     
     # Add all the special definitions that need to be added for the program to properly compile on windows.
-    set(SPECIAL_DEFINITIONS "/D_WIN32_WINNT=${WINVERSION_CODE} /D_USE_MATH_DEFINES")
+    # /D_WIN32_WINNT -> Specifies the minimum version of Windows that the application is compatible with.
+    # /D_USE_MATH_DEFINES -> Specifies that the math.h header file should be included.
+    # /Gd -> Use __cdecl as the default calling convention. https://docs.microsoft.com/en-us/cpp/cpp/cdecl
+    string(APPEND SPECIAL_DEFINITIONS "/D_WIN32_WINNT=${WINVERSION_CODE}")
+    string(APPEND SPECIAL_DEFINITIONS "/D_USE_MATH_DEFINES")
+    string(APPEND SPECIAL_DEFINITIONS "/Gd")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2 /wd4251 ${SPECIAL_DEFINITIONS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2 /wd4251 ${SPECIAL_DEFINITIONS}")
@@ -140,15 +152,31 @@ set(
 
 add_library(simpleble-static STATIC ${SRC_SIMPLEBLE_FILES})
 add_library(simpleble SHARED ${SRC_SIMPLEBLE_FILES})
+add_library(simpleble-c-static STATIC ${SRC_SIMPLEBLE_C_FILES})
+add_library(simpleble-c SHARED ${SRC_SIMPLEBLE_C_FILES})
 
 set_property(TARGET simpleble-static PROPERTY CXX_STANDARD 17)
 set_property(TARGET simpleble PROPERTY CXX_STANDARD 17)
+set_property(TARGET simpleble-c-static PROPERTY CXX_STANDARD 17)
+set_property(TARGET simpleble-c PROPERTY CXX_STANDARD 17)
+
+set_property(TARGET simpleble-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET simpleble PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET simpleble-c-static PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET simpleble-c PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+set_property(TARGET simpleble PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set_property(TARGET simpleble-c PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_include_directories(simpleble-static PRIVATE ${SIMPLE_BLE_ALL_INCLUDE_DIRS})
 target_include_directories(simpleble PRIVATE ${SIMPLE_BLE_ALL_INCLUDE_DIRS})
+target_include_directories(simpleble-c-static PRIVATE ${SIMPLE_BLE_ALL_INCLUDE_DIRS})
+target_include_directories(simpleble-c PRIVATE ${SIMPLE_BLE_ALL_INCLUDE_DIRS})
 
 target_link_libraries(simpleble-static PUBLIC ${EXTERNAL_LIBRARIES})
 target_link_libraries(simpleble PUBLIC ${EXTERNAL_LIBRARIES})
+target_link_libraries(simpleble-c-static PUBLIC simpleble-static)
+target_link_libraries(simpleble-c PUBLIC simpleble-static)
 
 # Export the variables needed by the parent project
 if(NOT ${STANDALONE})

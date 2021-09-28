@@ -56,7 +56,16 @@ std::optional<bool> SimpleBLE::Safe::Adapter::scan_is_active() noexcept {
 }
 
 std::optional<std::vector<SimpleBLE::Safe::Peripheral>> SimpleBLE::Safe::Adapter::scan_get_results() noexcept {
-    // TODO: Implement
+    try {
+        auto peripherals = SimpleBLE::Adapter::scan_get_results();
+        std::vector<SimpleBLE::Safe::Peripheral> safe_peripherals;
+        for (auto& peripheral : peripherals) {
+            safe_peripherals.push_back(SimpleBLE::Safe::Peripheral(peripheral));
+        }
+        return safe_peripherals;
+    } catch (const SimpleBLE::Exception::BaseException& e) {
+        return std::nullopt;
+    }
     return std::nullopt;
 }
 
@@ -92,7 +101,7 @@ bool SimpleBLE::Safe::Adapter::set_callback_on_scan_updated(
 bool SimpleBLE::Safe::Adapter::set_callback_on_scan_found(
     std::function<void(SimpleBLE::Safe::Peripheral)> on_scan_found) noexcept {
     try {
-        SimpleBLE::Adapter::set_callback_on_scan_updated(
+        SimpleBLE::Adapter::set_callback_on_scan_found(
             [=](SimpleBLE::Peripheral p) { on_scan_found(SimpleBLE::Safe::Peripheral(p)); });
         return true;
     } catch (const SimpleBLE::Exception::BaseException& e) {

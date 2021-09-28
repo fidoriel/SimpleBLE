@@ -19,6 +19,7 @@ class PeripheralBase {
     void connect();
     void disconnect();
     bool is_connected();
+    bool is_connectable();
 
     std::vector<BluetoothService> services();
 
@@ -40,6 +41,10 @@ class PeripheralBase {
      * Holds a pointer to the Objective-C representation of this object.
      */
     void* opaque_internal_;
+
+    bool is_connectable_;
+
+    bool manual_disconnect_triggered_;
 
     std::function<void()> callback_on_connected_;
     std::function<void()> callback_on_disconnected_;
